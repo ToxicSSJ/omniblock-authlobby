@@ -1,0 +1,4 @@
+name: AuthLobby
+main: net.omniblock.lobbies.auth.AuthLobbyPlugin
+softdepend: [OmniNetwork, OmniLobbies]
+version: 2.5.0
