@@ -4,6 +4,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import net.omniblock.lobbies.api.LobbyHandler;
 import net.omniblock.lobbies.auth.handler.AuthLobby;
+import net.omniblock.lobbies.auth.handler.packets.AuthPackets;
 import net.omniblock.network.handlers.Handlers;
 import net.omniblock.network.handlers.network.NetworkManager;
 import net.omniblock.packets.object.external.ServerType;
@@ -31,10 +32,15 @@ public class AuthLobbyPlugin extends JavaPlugin {
 		Handlers.LOGGER.sendModuleMessage("OmniLobbies", "Se ha inicializado este lobby como un AuthLobby!");
 		
 		LobbyHandler.startLobby(lobby);
+		AuthPackets.registerReaders();
 		
 	}
 	
-	public AuthLobbyPlugin getInstance() {
+	public static AuthLobby getLobby() {
+		return lobby;
+	}
+	
+	public static AuthLobbyPlugin getInstance() {
 		return instance;
 	}
 	

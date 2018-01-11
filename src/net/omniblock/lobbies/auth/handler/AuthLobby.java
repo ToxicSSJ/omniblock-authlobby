@@ -1,5 +1,6 @@
 package net.omniblock.lobbies.auth.handler;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -11,8 +12,11 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -25,15 +29,17 @@ import net.omniblock.lobbies.api.object.LobbyWorld;
 import net.omniblock.lobbies.api.type.CommonLobby;
 import net.omniblock.lobbies.apps.attributes.type.AttributeType;
 import net.omniblock.lobbies.utils.PlayerUtils;
-import net.omniblock.network.handlers.base.bases.type.AuthBase;
+import net.omniblock.lobbies.auth.handler.packets.base.AuthBase;
 import net.omniblock.network.library.addons.resourceaddon.ResourceHandler;
 import net.omniblock.network.library.addons.resourceaddon.type.ResourceType;
 import net.omniblock.network.library.utils.TextUtil;
 import net.omniblock.packets.util.Lists;
 
+@SuppressWarnings("deprecation")
 public class AuthLobby extends CommonLobby {
 
 	public static LobbyWorld lobbyWorld = LobbyUtility.getLobbyWorld("Auth");
+	protected static List<Player> authPlayers = new ArrayList<Player>();
 	
 	protected AuthLobby instance;
 	
@@ -102,21 +108,30 @@ public class AuthLobby extends CommonLobby {
 			
 		};
 	}
-
+	
+	public Player getPlayer(String playername) {
+		
+		for(Player player : authPlayers)
+			if(player.getName().equals(playername))
+				return player;
+		
+		return null;
+		
+	}
+	
 	public Map<String, List<Location>> getLastScan() {
 		return scan;
 	}
 	
 	@Override
 	public String getLobbyName() {
-		return "MainLobby";
+		return "AuthLobby";
 	}
 
 	@Override
 	public Listener getEvents() {
 		return new Listener() {
 			
-			@SuppressWarnings("deprecation")
 			@EventHandler
 			public void onJoin(PlayerJoinEvent e){
 				
@@ -138,12 +153,15 @@ public class AuthLobby extends CommonLobby {
 				e.getPlayer().setExp(0);
 				e.getPlayer().setLevel(0);
 				
+				if(!authPlayers.contains(e.getPlayer()))
+					authPlayers.add(e.getPlayer());
+				
 				AuthBase.evaluate(e.getPlayer());
 				
 				for(Player player : Bukkit.getOnlinePlayers()) {
 					
 					player.hidePlayer(e.getPlayer());
-					e.getPlayer().hidePlayer(e.getPlayer());
+					e.getPlayer().hidePlayer(player);
 					
 				}
 				
@@ -154,7 +172,7 @@ public class AuthLobby extends CommonLobby {
 						
 						if(e.getPlayer() != null)
 							if(e.getPlayer().isOnline())
-								e.getPlayer().kickPlayer(TextUtil.format("&6&l¡Se te agotó el tiempo de Acceso!"));
+								e.getPlayer().kickPlayer(TextUtil.format("&6&lÂ¡Se te agotÃ³ el tiempo de Acceso!"));
 						
 					}
 					
@@ -163,6 +181,22 @@ public class AuthLobby extends CommonLobby {
 				ResourceHandler.sendResourcePack(e.getPlayer(), ResourceType.OMNIBLOCK_DEFAULT);
 				
 				teleportPlayer(e.getPlayer());
+				
+			}
+			
+			@EventHandler
+			public void onQuit(PlayerQuitEvent e) {
+				
+				if(authPlayers.contains(e.getPlayer()))
+					authPlayers.remove(e.getPlayer());
+				
+			}
+			
+			@EventHandler(priority = EventPriority.LOW)
+			public void onChat(PlayerChatEvent e) {
+				
+				e.setCancelled(true);
+				return;
 				
 			}
 			
