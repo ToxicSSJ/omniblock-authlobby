@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Omniblock-AuthLobby:jar">
+    <output-path>$PROJECT_DIR$/../CompiledJars</output-path>
+    <root id="archive" name="Omniblock-AuthLobby.jar">
+      <element id="module-output" name="Omniblock-AuthLobby" />
+    </root>
+  </artifact>
+</component>
