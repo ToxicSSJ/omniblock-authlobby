@@ -33,6 +33,7 @@ import net.omniblock.lobbies.auth.handler.packets.base.AuthBase;
 import net.omniblock.network.library.addons.resourceaddon.ResourceHandler;
 import net.omniblock.network.library.addons.resourceaddon.type.ResourceType;
 import net.omniblock.network.library.utils.TextUtil;
+import net.omniblock.network.systems.adapters.GameJOINAdapter;
 import net.omniblock.packets.util.Lists;
 
 @SuppressWarnings("deprecation")
@@ -71,9 +72,11 @@ public class AuthLobby extends CommonLobby {
 		this.instance = this;
 		
 	}
-
+	
 	@Override
 	public void onStartBeingExecute() {
+		
+		GameJOINAdapter.toggleJoinMSG(false);
 		
 		this.setSpawnPoint(new Location(this.getWorld().getBukkitWorld(), 23.5, 55, 3.5, 90, (float) 0));
 		return;
