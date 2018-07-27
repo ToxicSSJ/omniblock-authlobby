@@ -1,5 +1,6 @@
 package net.omniblock.lobbies.auth.handler.packets.readers;
 
+import net.omniblock.network.handlers.base.sql.util.Resolver;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -39,7 +40,6 @@ public class AuthReaders {
 					cmd.getName().equalsIgnoreCase("login") || cmd.getName().equalsIgnoreCase("l")) {
 				
 				if(!(sender instanceof Player)){
-					
 					sender.sendMessage(TextUtil.format("&cEste comando solo puede ser ejecutado por un jugador."));
 					return true;
 					
@@ -114,10 +114,11 @@ public class AuthReaders {
 
 					}
 
-					String pass = AuthBase.getPassword(player);
+					AuthBase.PassInfo passInfo = AuthBase.getPassword(player);
+					String encodedUserPass = AuthBase.passwordToSha256(args[0], passInfo.getSalt());
+					String databasePass = passInfo.getPass();
 
-					if (args[0].equals(pass)) {
-
+					if (encodedUserPass.equals(databasePass)) {
 						player.sendMessage(TextUtil.format(
 								"&8&lC&8uentas &a&l» &aTe has logeado correctamente!" + (AccountManager
 										.hasTag(AccountTagType.IP_LOGIN, AccountBase.getTags(player))
@@ -298,9 +299,11 @@ public class AuthReaders {
 
 								}
 
-								String pass = AuthBase.getPassword(player);
+								AuthBase.PassInfo passInfo = AuthBase.getPassword(player);
+								String encodedUserPass = AuthBase.passwordToSha256(e.getMessage(), passInfo.getSalt());
+								String databasePass = passInfo.getPass();
 
-								if (e.getMessage().equals(pass)) {
+								if (encodedUserPass.equals(databasePass)) {
 
 									player.sendMessage(TextUtil.format(
 											"&8&lC&8uentas &a&l» &aTe has logeado correctamente!" + (AccountManager

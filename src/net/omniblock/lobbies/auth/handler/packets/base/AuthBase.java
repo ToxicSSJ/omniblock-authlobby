@@ -1,7 +1,16 @@
 package net.omniblock.lobbies.auth.handler.packets.base;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.sql.SQLException;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Logger;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -31,25 +40,23 @@ public class AuthBase {
 
 		MakeSQLUpdate msu = new MakeSQLUpdate(TableType.PLAYER_SETTINGS, TableOperation.UPDATE);
 
-		msu.rowOperation("p_pass", password);
+		String randomHex = generateSafeRandomHex(30);
+		String encodedPass = passwordToSha256(password, randomHex);
+
+		msu.rowOperation("p_pass_salt", randomHex);
+		msu.rowOperation("p_pass", encodedPass);
 		msu.whereOperation("p_id", Resolver.getNetworkID(player));
 
 		try {
-
 			msu.execute();
-			return;
-
 		} catch (IllegalArgumentException | SQLException e) {
 			e.printStackTrace();
 		}
-
-		return;
-
 	}
 
-	public static String getPassword(Player player) {
+	public static PassInfo getPassword(Player player) {
 
-		MakeSQLQuery msq = new MakeSQLQuery(TableType.PLAYER_SETTINGS).select("p_pass").where("p_id",
+		MakeSQLQuery msq = new MakeSQLQuery(TableType.PLAYER_SETTINGS).select("p_pass_salt").select("p_pass").where("p_id",
 				Resolver.getNetworkID(player));
 
 		try {
@@ -57,15 +64,47 @@ public class AuthBase {
 			SQLResultSet sqr = msq.execute();
 
 			if (sqr.next()) {
-				return sqr.get("p_pass");
+				PassInfo passInfo = new PassInfo();
+				passInfo.pass = sqr.get("p_pass");
+				passInfo.salt = sqr.get("p_pass_salt");
+				return passInfo;
 			}
 
 		} catch (IllegalArgumentException | SQLException e) {
 			e.printStackTrace();
 		}
 
-		return DEFAULT_PASS;
+		PassInfo defPass = new PassInfo();
+		defPass.pass = DEFAULT_PASS;
+		defPass.salt = DEFAULT_PASS;
+		return defPass;
 
+	}
+
+	public static String generateSafeRandomHex(int length) {
+		SecureRandom random = new SecureRandom();
+		byte bytes[] = new byte[length];
+		random.nextBytes(bytes);
+		Base64.Encoder encoder = Base64.getUrlEncoder().withoutPadding();
+		return encoder.encodeToString(bytes);
+	}
+
+	public static String passwordToSha256(String password, String salt) {
+		try {
+			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			byte[] encodedhash = digest.digest((password + salt).getBytes(StandardCharsets.UTF_8));
+			StringBuilder hexString = new StringBuilder();
+			for (byte encodedByte : encodedhash) {
+				String hex = Integer.toHexString(0xff & encodedByte);
+				if (hex.length() == 1) hexString.append('0');
+				hexString.append(hex);
+			}
+			return hexString.toString();
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+
+		return "EXCEPTION:" + password;
 	}
 
 	public static boolean isRegister(Player player) {
@@ -139,6 +178,19 @@ public class AuthBase {
 		}.runTaskLater(OmniNetwork.getInstance(), 20 * 10);
 		return;
 
+	}
+
+	public static class PassInfo {
+		private String pass;
+		private String salt;
+
+		public String getPass() {
+			return pass;
+		}
+
+		public String getSalt() {
+			return salt;
+		}
 	}
 
 }

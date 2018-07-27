@@ -3,6 +3,7 @@
     <output-path>$PROJECT_DIR$/../CompiledJars</output-path>
     <root id="archive" name="Omniblock-AuthLobby.jar">
       <element id="module-output" name="Omniblock-AuthLobby" />
+      <element id="file-copy" path="$PROJECT_DIR$/plugin.yml" />
     </root>
   </artifact>
 </component>
